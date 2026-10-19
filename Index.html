@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>CalcNote</title>
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: #f4f6f8;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            max-width: 500px;
+            margin: 0 auto;
+            border-left: 1px solid #e0e0e0;
+            border-right: 1px solid #e0e0e0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Header */
+        header {
+            background-color: #0088cc;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.12);
+            z-index: 10;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .header-left i {
+            font-size: 18px;
+            cursor: pointer;
+        }
+
+        .header-left h1 {
+            font-size: 19px;
+            font-weight: 600;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .header-right i {
+            font-size: 18px;
+            cursor: pointer;
+        }
+
+        /* Main Workspace Area */
+        .editor-container {
+            flex: 1;
+            display: flex;
+            background-color: #ffffff;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Line Numbers Column */
+        .line-numbers {
+            width: 34px;
+            background-color: #f7f9fa;
+            border-right: 1px solid #e2e8f0;
+            color: #c53030;
+            font-size: 18px;
+            font-weight: 700;
+            text-align: right;
+            padding-right: 6px;
+            padding-top: 8px;
+            user-select: none;
+            line-height: 1.5;
+        }
+
+        /* Text Input Editor */
+        .text-editor {
+            flex: 1;
+            padding: 8px 10px;
+            border: none;
+            outline: none;
+            resize: none;
+            font-size: 18px;
+            line-height: 1.5;
+            color: #276749;
+            white-space: pre;
+            overflow-y: auto;
+            border-right: 1px solid #e2e8f0;
+        }
+
+        /* Calculated Results Column */
+        .results-panel {
+            width: 110px;
+            padding: 8px 12px 8px 8px;
+            background-color: #ffffff;
+            font-size: 18px;
+            line-height: 1.5;
+            color: #1a202c;
+            text-align: right;
+            overflow-y: hidden;
+            user-select: none;
+        }
+
+        /* Side Navigation Drawer */
+        .side-menu {
+            position: absolute;
+            top: 0;
+            left: -330px;
+            width: 330px;
+            height: 100%;
+            background-color: #ffffff;
+            box-shadow: 4px 0 16px rgba(0,0,0,0.15);
+            transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 20;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .side-menu.open {
+            left: 0;
+        }
+
+        .menu-header {
+            background-color: #0088cc;
+            color: white;
+            padding: 16px;
+            font-size: 18px;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* Product Form Card */
+        .form-card {
+            background: #ffffff;
+            padding: 16px;
+            border-bottom: 1px solid #edf2f7;
+        }
+
+        .form-card h3 {
+            font-size: 16px;
+            color: #2d3748;
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+
+        .input-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 9px 12px;
+            border: 1px solid #cbd5e0;
+            border-radius: 6px;
+            font-size: 14px;
+            outline: none;
+            color: #2d3748;
+            transition: border-color 0.2s;
+        }
+
+        .input-field:focus {
+            border-color: #0088cc;
+        }
+
+        .bulk-divider {
+            display: flex;
+            align-items: center;
+            text-align: center;
+            color: #718096;
+            font-size: 12px;
+            font-weight: 600;
+            margin: 12px 0;
+        }
+
+        .bulk-divider::before, .bulk-divider::after {
+            content: '';
+            flex: 1;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .bulk-divider span {
+            padding: 0 8px;
+        }
+
+        .bulk-textarea {
+            width: 100%;
+            height: 70px;
+            padding: 8px 12px;
+            border: 1px solid #cbd5e0;
+            border-radius: 6px;
+            font-size: 13px;
+            outline: none;
+            color: #2d3748;
+            resize: vertical;
+            font-family: monospace;
+            margin-bottom: 10px;
+        }
+
+        .bulk-textarea:focus {
+            border-color: #0088cc;
+        }
+
+        .btn-submit {
+            width: 100%;
+            background-color: #00a859;
+            color: #ffffff;
+            border: none;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,168,89,0.2);
+        }
+
+        .btn-submit:hover {
+            background-color: #008f4c;
+        }
+
+        /* Saved Products Section & Search Box */
+        .table-section {
+            padding: 16px;
+            flex: 1;
+        }
+
+        .table-header-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .table-section h4 {
+            font-size: 14px;
+            color: #4a5568;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .search-box {
+            position: relative;
+            margin-bottom: 12px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 8px 12px 8px 34px;
+            border: 1px solid #cbd5e0;
+            border-radius: 6px;
+            font-size: 14px;
+            outline: none;
+            color: #2d3748;
+            transition: border-color 0.2s;
+        }
+
+        .search-box input:focus {
+            border-color: #0088cc;
+        }
+
+        .search-box i {
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #a0aec0;
+            font-size: 14px;
+        }
+
+        .product-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #ffffff;
+            border-radius: 6px;
+            overflow: hidden;
+            border: 1px solid #edf2f7;
+        }
+
+        .product-table th {
+            background-color: #f7fafc;
+            color: #4a5568;
+            font-weight: 600;
+            text-align: left;
+            padding: 10px 8px;
+            font-size: 13px;
+            border-bottom: 1px solid #edf2f7;
+        }
+
+        .product-table td {
+            padding: 9px 8px;
+            border-bottom: 1px solid #edf2f7;
+            font-size: 14px;
+            color: #2d3748;
+        }
+
+        .code-badge {
+            background-color: #ebf8ff;
+            color: #0088cc;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .action-btns {
+            display: flex;
+            gap: 12px;
+        }
+
+        .action-btns i {
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .btn-edit { color: #0088cc; }
+        .btn-delete { color: #e53e3e; }
+
+        /* Side Menu Overlay */
+        .menu-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            display: none;
+            z-index: 15;
+        }
+
+        .menu-overlay.active {
+            display: block;
+        }
+
+        /* Bottom Status Footer */
+        footer {
+            background-color: #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 16px;
+            border-top: 1px solid #cbd5e0;
+            font-size: 18px;
+        }
+
+        .footer-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            color: #0088cc;
+            font-weight: 700;
+        }
+
+        .footer-btn {
+            cursor: pointer;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+
+        .footer-btn.active {
+            background-color: #0088cc;
+            color: #ffffff;
+        }
+
+        .footer-right {
+            color: #1a202c;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Overlay -->
+    <div class="menu-overlay" id="menuOverlay" onclick="toggleMenu()"></div>
+
+    <!-- Side Menu Drawer -->
+    <div class="side-menu" id="sideMenu">
+        <div class="menu-header">
+            <span>CalcNote Menu</span>
+            <i class="fa-solid fa-xmark" onclick="toggleMenu()" style="cursor: pointer;"></i>
+        </div>
+
+        <!-- Integrated Product Form (Single + Bulk) -->
+        <div class="form-card">
+            <h3 id="formTitle">Add Product</h3>
+            <input type="hidden" id="editIndex" value="-1">
+
+            <!-- Single Inputs -->
+            <div class="input-row">
+                <input type="text" class="input-field" id="prodName" placeholder="Product name (e.g. Kings)">
+            </div>
+            <div class="input-row">
+                <input type="text" class="input-field" id="prodShortcut" placeholder="Shortcut (e.g. K)">
+                <input type="number" class="input-field" id="prodPrice" placeholder="Price ₹">
+            </div>
+
+            <!-- Divider -->
+            <div class="bulk-divider">
+                <span>OR BULK ADD</span>
+            </div>
+
+            <!-- Bulk Input -->
+            <textarea class="bulk-textarea" id="bulkInput" placeholder="Paste bulk lines:&#10;Kings, k, 219&#10;Lays, l, 50"></textarea>
+
+            <button class="btn-submit" onclick="saveProductData()">Save / Import Product</button>
+        </div>
+
+        <!-- Saved Products Table & Search Bar -->
+        <div class="table-section">
+            <div class="table-header-row">
+                <h4>Saved Products</h4>
+            </div>
+
+            <!-- Search Bar -->
+            <div class="search-box">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" id="searchInput" placeholder="Search product or code..." oninput="renderProductsTable()">
+            </div>
+
+            <table class="product-table">
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>Code</th>
+                        <th>Price</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="productTableBody">
+                    <!-- Dynamic Rows -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header>
+        <div class="header-left">
+            <i class="fa-solid fa-bars" onclick="toggleMenu()"></i>
+            <h1>CalcNote</h1>
+        </div>
+        <div class="header-right">
+            <i class="fa-solid fa-plus" title="New Bill" onclick="createNewBill()"></i>
+            <i class="fa-solid fa-floppy-disk" title="Save" onclick="createNewBill()"></i>
+            <i class="fa-solid fa-gear" title="Settings" onclick="toggleMenu()"></i>
+        </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <div class="editor-container">
+        <div class="line-numbers" id="lineNumbers">1</div>
+        <textarea class="text-editor" id="calcEditor" placeholder="Type shortcuts like k, l, c..." spellcheck="false">Kings 219*5
+Lays 50*6</textarea>
+        <div class="results-panel" id="resultsPanel"></div>
+    </div>
+
+    <!-- Footer Bar -->
+    <footer>
+        <div class="footer-left">
+            <span class="footer-btn" id="btn123" onclick="setKeyboardMode('123')">123</span>
+            <span class="footer-btn" id="btnABC" onclick="setKeyboardMode('ABC')">ABC</span>
+            <i class="fa-solid fa-keyboard footer-btn" id="btnKey" onclick="toggleKeyboard()"></i>
+        </div>
+        <div class="footer-right" id="totalResult">
+            Total: 0
+        </div>
+    </footer>
+
+    <script>
+        const editor = document.getElementById('calcEditor');
+        const lineNumbers = document.getElementById('lineNumbers');
+        const resultsPanel = document.getElementById('resultsPanel');
+        const totalResult = document.getElementById('totalResult');
+        const sideMenu = document.getElementById('sideMenu');
+        const menuOverlay = document.getElementById('menuOverlay');
+
+        // Pre-loaded Products Array
+        let products = [
+            { name: "Kings", shortcut: "k", price: 219 },
+            { name: "Lays", shortcut: "l", price: 50 },
+            { name: "Campa Cola", shortcut: "c", price: 40 },
+            { name: "Pepsi", shortcut: "p", price: 40 },
+            { name: "Biscuits", shortcut: "b", price: 10 },
+            { name: "Thums Up", shortcut: "t", price: 40 },
+            { name: "Water Bottle", shortcut: "w", price: 20 },
+            { name: "Sprite", shortcut: "s", price: 40 },
+            { name: "Dairy Milk", shortcut: "d", price: 50 },
+            { name: "medium pamper", shortcut: "kk", price: 80 },
+            { name: "Mixture", shortcut: "m", price: 30 },
+            { name: "Redlays", shortcut: "rl", price: 90 }
+        ];
+
+        // Create New Bill directly
+        function createNewBill() {
+            editor.value = '';
+            updateCalculator();
+            editor.focus();
+        }
+
+        // Toggle Drawer
+        function toggleMenu() {
+            sideMenu.classList.toggle('open');
+            menuOverlay.classList.toggle('active');
+        }
+
+        // Render Table with Real-time Search Filtering
+        function renderProductsTable() {
+            const tbody = document.getElementById('productTableBody');
+            const query = document.getElementById('searchInput') ? document.getElementById('searchInput').value.toLowerCase().trim() : '';
+            tbody.innerHTML = '';
+
+            const filteredProducts = products.filter(prod => {
+                const nameMatch = prod.name.toLowerCase().includes(query);
+                const codeMatch = prod.shortcut.toLowerCase().includes(query);
+                return nameMatch || codeMatch;
+            });
+
+            if (filteredProducts.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#a0aec0; padding:12px;">No products found</td></tr>`;
+                return;
+            }
+
+            filteredProducts.forEach((prod) => {
+                // Find actual index in original array
+                const originalIndex = products.indexOf(prod);
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td style="cursor:pointer; font-weight:500;" onclick="insertProduct('${prod.name}', ${prod.price})">${prod.name}</td>
+                    <td><span class="code-badge">${prod.shortcut ? prod.shortcut.toUpperCase() : '-'}</span></td>
+                    <td>₹${prod.price || 0}</td>
+                    <td class="action-btns">
+                        <i class="fa-solid fa-pen-to-square btn-edit" onclick="editProduct(${originalIndex})"></i>
+                        <i class="fa-solid fa-trash btn-delete" onclick="deleteProduct(${originalIndex})"></i>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Handle Form Submission (Single + Bulk)
+        function saveProductData() {
+            const name = document.getElementById('prodName').value.trim();
+            const shortcut = document.getElementById('prodShortcut').value.trim().toLowerCase();
+            const price = document.getElementById('prodPrice').value.trim();
+            const bulkText = document.getElementById('bulkInput').value.trim();
+            const editIndex = parseInt(document.getElementById('editIndex').value);
+
+            // 1. Process Bulk Input if present
+            if (bulkText) {
+                const lines = bulkText.split('\n');
+                lines.forEach(line => {
+                    if (line.trim()) {
+                        const parts = line.split(',');
+                        if (parts.length >= 1) {
+                            const bName = parts[0].trim();
+                            const bShortcut = parts[1] ? parts[1].trim().toLowerCase() : '';
+                            const bPrice = parts[2] ? parseFloat(parts[2].trim()) : 0;
+                            if (bName) {
+                                products.push({ name: bName, shortcut: bShortcut, price: isNaN(bPrice) ? 0 : bPrice });
+                            }
+                        }
+                    }
+                });
+                document.getElementById('bulkInput').value = '';
+                renderProductsTable();
+                toggleMenu();
+                return;
+            }
+
+            // 2. Process Single Product Entry
+            if (!name) return;
+
+            const newProduct = {
+                name: name,
+                shortcut: shortcut,
+                price: price ? parseFloat(price) : 0
+            };
+
+            if (editIndex >= 0) {
+                products[editIndex] = newProduct;
+                document.getElementById('editIndex').value = -1;
+                document.getElementById('formTitle').innerText = 'Add Product';
+            } else {
+                products.push(newProduct);
+            }
+
+            document.getElementById('prodName').value = '';
+            document.getElementById('prodShortcut').value = '';
+            document.getElementById('prodPrice').value = '';
+
+            renderProductsTable();
+            toggleMenu();
+        }
+
+        // Edit Product
+        function editProduct(index) {
+            const prod = products[index];
+            document.getElementById('prodName').value = prod.name;
+            document.getElementById('prodShortcut').value = prod.shortcut;
+            document.getElementById('prodPrice').value = prod.price;
+            document.getElementById('editIndex').value = index;
+            document.getElementById('formTitle').innerText = 'Edit Product';
+        }
+
+        // Delete Product
+        function deleteProduct(index) {
+            products.splice(index, 1);
+            renderProductsTable();
+        }
+
+        // Insert product from table tap
+        function insertProduct(name, price) {
+            const textToInsert = price ? `${name} ${price}*` : `${name} `;
+            const start = editor.selectionStart;
+            const end = editor.selectionEnd;
+            const text = editor.value;
+
+            editor.value = text.substring(0, start) + textToInsert + text.substring(end);
+            editor.selectionStart = editor.selectionEnd = start + textToInsert.length;
+
+            toggleMenu();
+            editor.focus();
+            updateCalculator();
+        }
+
+        // Auto replacement for shortcuts
+        function checkShortcutReplacements() {
+            const cursorPos = editor.selectionStart;
+            const text = editor.value;
+            const lines = text.split('\n');
+
+            let currentLineIndex = 0;
+            let count = 0;
+
+            for (let i = 0; i < lines.length; i++) {
+                count += lines[i].length + 1;
+                if (cursorPos < count) {
+                    currentLineIndex = i;
+                    break;
+                }
+            }
+
+            let currentLine = lines[currentLineIndex];
+
+            products.forEach(prod => {
+                if (prod.shortcut) {
+                    const regex = new RegExp(`^${prod.shortcut.trim()}(\\s+|\$)$`, 'i');
+                    if (regex.test(currentLine.trim())) {
+                        const replacement = `${prod.name} ${prod.price}*`;
+                        lines[currentLineIndex] = replacement;
+                        editor.value = lines.join('\n');
+
+                        const newCursorPos = lines.slice(0, currentLineIndex).join('\n').length + replacement.length + (currentLineIndex > 0 ? 1 : 0);
+                        editor.selectionStart = editor.selectionEnd = newCursorPos;
+                    }
+                }
+            });
+        }
+
+        // Toggle Keyboard Focus
+        function toggleKeyboard() {
+            if (document.activeElement === editor) {
+                editor.blur();
+            } else {
+                editor.focus();
+            }
+        }
+
+        // Keyboard Modes
+        function setKeyboardMode(mode) {
+            document.getElementById('btn123').classList.remove('active');
+            document.getElementById('btnABC').classList.remove('active');
+
+            if (mode === '123') {
+                document.getElementById('btn123').classList.add('active');
+                editor.inputMode = 'decimal';
+            } else {
+                document.getElementById('btnABC').classList.add('active');
+                editor.inputMode = 'text';
+            }
+            editor.focus();
+        }
+
+        // Calculator Logic
+        function updateCalculator() {
+            checkShortcutReplacements();
+
+            const lines = editor.value.split('\n');
+            let numbersHtml = '';
+            let resultsHtml = '';
+            let grandTotal = 0;
+
+            lines.forEach((line, index) => {
+                numbersHtml += (index + 1) + '<br>';
+
+                const mathMatch = line.match(/[\d\.\s\+\-\*\/\(\)]+/g);
+                let lineTotal = null;
+
+                if (mathMatch) {
+                    try {
+                        const expression = mathMatch.join('').trim();
+                        if (expression) {
+                            const evalResult = Function(`'use strict'; return (${expression})`)();
+                            if (typeof evalResult === 'number' && !isNaN(evalResult)) {
+                                lineTotal = evalResult;
+                                grandTotal += lineTotal;
+                            }
+                        }
+                    } catch (e) {
+                        lineTotal = null;
+                    }
+                }
+
+                if (lineTotal !== null) {
+                    resultsHtml += lineTotal.toLocaleString('en-US') + '<br>';
+                } else {
+                    resultsHtml += '<br>';
+                }
+            });
+
+            lineNumbers.innerHTML = numbersHtml;
+            resultsPanel.innerHTML = resultsHtml;
+            totalResult.innerText = 'Total: ' + grandTotal.toLocaleString('en-US');
+        }
+
+        // Sync scroll
+        editor.addEventListener('scroll', () => {
+            lineNumbers.scrollTop = editor.scrollTop;
+            resultsPanel.scrollTop = editor.scrollTop;
+        });
+
+        editor.addEventListener('input', updateCalculator);
+
+        // Initial setup
+        renderProductsTable();
+        setKeyboardMode('123');
+        updateCalculator();
+    </script>
+</body>
+</html>
